@@ -1,0 +1,9 @@
+Z:\Assignment\Fractal\Fractal\bin\Debug\Fractal.exe.config
+Z:\Assignment\Fractal\Fractal\bin\Debug\Fractal.exe
+Z:\Assignment\Fractal\Fractal\bin\Debug\Fractal.pdb
+Z:\Assignment\Fractal\Fractal\obj\Debug\Fractal.Properties.Resources.resources
+Z:\Assignment\Fractal\Fractal\obj\Debug\Fractal.csproj.GenerateResource.Cache
+Z:\Assignment\Fractal\Fractal\obj\Debug\Fractal.exe
+Z:\Assignment\Fractal\Fractal\obj\Debug\Fractal.pdb
+Z:\Assignment\Fractal\Fractal\obj\Debug\Fractal.csprojResolveAssemblyReference.cache
+Z:\Assignment\Fractal\Fractal\obj\Debug\Fractal.Fractal.resources
