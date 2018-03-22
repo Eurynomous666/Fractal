@@ -13,8 +13,6 @@ namespace Fractal
 {
     public partial class Fractal : Form
     {
-       
-      
         private const int MAX = 256;      // max iterations
         private const double SX = -2.025; // start value real
         private const double SY = -1.125; // start value imaginary
@@ -22,18 +20,91 @@ namespace Fractal
         private const double EY = 1.125;  // end value imaginary
         private static int x1, y1, xs, ys, xe, ye;
         private static double xstart, ystart, xende, yende, xzoom, yzoom;
-        private static Boolean action, rectangle, finished;
+        private static bool action, rectangle, finished;
         private static float xy;
+        private bool mouseDown = false;
         //private Image picture;
-        private Graphics g1;
-        private Graphics g;
         private Bitmap picture;
+        private Graphics g;
+        private Graphics g1;
         private Cursor c1, c2;
 
+        private void pictureBox1_MouseDown(object sender, MouseEventArgs e)
+        {
+            {
+                //e.consume();
+                if (action)
+                {
+                    mouseDown = true;
+                    xs = e.X;
+                    ys = e.Y;
+                }
+            }
+        }
 
+        private void pictureBox1_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (action && mouseDown)
+            {
+                xe = e.X;
+                ye = e.Y;
+                rectangle = true;
+                pictureBox1.Refresh();
+            }
+        }
+
+        private void pictureBox1_MouseUp(object sender, MouseEventArgs e)
+        {
+            int z, w;
+
+            if (action)
+            {
+                xe = e.X;
+                ye = e.Y;
+                if (xs > xe)
+                {
+                    z = xs;
+                    xs = xe;
+                    xe = z;
+                }
+                if (ys > ye)
+                {
+                    z = ys;
+                    ys = ye;
+                    ye = z;
+                }
+                w = (xe - xs);
+                z = (ye - ys);
+                if ((w < 2) && (z < 2)) initvalues();
+                else
+                {
+                    if (((float)w > (float)z * xy)) ye = (int)((float)ys + (float)w / xy);
+                    else xe = (int)((float)xs + (float)z * xy);
+                    xende = xstart + xzoom * (double)xe;
+                    yende = ystart + yzoom * (double)ye;
+                    xstart += xzoom * (double)xs;
+                    ystart += yzoom * (double)ys;
+                }
+                xzoom = (xende - xstart) / (double)x1;
+                yzoom = (yende - ystart) / (double)y1;
+                mandelbrot();
+                rectangle = false;
+                pictureBox1.Refresh();
+                mouseDown = false;
+            }
+        
+    }
+
+        private HSB HSBcol;
         private Pen pen;
         private Rectangle rect;
-        private HSB HSBcol;
+
+
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            HSB hsb = new HSB();
+        }
 
 
         private void stop()
@@ -44,41 +115,40 @@ namespace Fractal
         }
 
 
-        public void InitializeForm() // all instances will be prepared
+        public Fractal()
         {
             InitializeComponent();
             HSBcol = new HSB();
-            
-            this.pictureBox1.Size = new System.Drawing.Size(640, 480); //setSize(640, 480);
+            this.pictureBox1.Size = new System.Drawing.Size(640, 480); // equivalent of setSize in java code
             finished = false;
-            //addMouseListener(this);
-            //addMouseMotionListener(this);
             c1 = Cursors.WaitCursor;
             c2 = Cursors.Cross;
-            x1 = pictureBox1.Width;//300 value
-            y1 = pictureBox1.Height;//300 value
+            x1 = pictureBox1.Width;
+            y1 = pictureBox1.Height;
             xy = (float)x1 / (float)y1;
-            picture = new Bitmap(x1,y1);
+            picture = new Bitmap(pictureBox1.Width, pictureBox1.Height);
             g1 = Graphics.FromImage(picture);
             finished = true;
 
             start();
+
         }
 
 
-      /*  public void destroy() // delete all instances 
-        {
-            if (finished)
-            {
-                //removeMouseListener(this);
-                //removeMouseMotionListener(this);
-                picture = null;
-                g1 = null;
-                c1 = null;
-                c2 = null;
-                //System.gc(); // garbage collection
-            }
-        }*/
+
+
+         public void destroy() // delete all instances 
+          {
+              if (finished)
+              {
+
+                  picture = null;
+                  g1 = null;
+                  c1 = null;
+                  c2 = null;
+              }
+          }
+
 
         public void start()
         {
@@ -92,8 +162,7 @@ namespace Fractal
 
 
 
-
-        public void paint(Graphics g)
+        public void pictureBox1_paint(Graphics g)
         {
             Update(g);
         } 
@@ -138,29 +207,6 @@ namespace Fractal
             }
         } 
 
-     /*   public void update(Graphics g)
-        {
-            Pen p1 = new Pen(Color.White);
-            g.DrawRectangle(p1, 0, 0, 0, 0);
-
-
-            if (rectangle)
-            {
-
-                g.GetNearestColor (Color.White);
-                if (xs < xe)
-                {
-
-                    if (ys < ye) g.DrawRectangles(xs, ys, (xe - xs), (ye - ys));
-                    else g.DrawRectangle(xs, ye, (xe - xs), (ys - ye));
-                }
-                else
-                {
-                    if (ys < ye) g.DrawRectangle(xe, ys, (xs - xe), (ye - ys));
-                    else g.DrawRectangle(xe, ye, (xs - xe), (ys - ye));
-                }
-            }
-        }*/
 
 
         private void mandelbrot() // calculate all points
@@ -170,10 +216,9 @@ namespace Fractal
             Pen pen = new Pen(Color.White);
 
             action = false;
-            //this.Cursor = c1; // in java setCursor(c1)
             pictureBox1.Cursor = c2;
 
-            //showStatus("Mandelbrot-Set will be produced - please wait..."); will do later
+
             for (x = 0; x < x1; x += 2)
             {
                 for (y = 0; y < y1; y++)
@@ -189,8 +234,6 @@ namespace Fractal
 
                         pen = new Pen(col);
 
-                        //djm end
-                        //djm added to convert to RGB from HSB
 
                         alt = h;
                     }
@@ -229,99 +272,8 @@ namespace Fractal
                 xstart = xende - (yende - ystart) * (double)xy;
         }
 
-        /*public void mousePressed(MouseEvent e)
-        {
-            e.consume();
-            if (action)
-            {
-                xs = e.X();
-                ys = e.Y();
-            }
-        }
 
-        public void mouseReleased(MouseEvent e)
-        {
-            int z, w;
 
-            e.consume();
-            if (action)
-            {
-                xe = e.getX();
-                ye = e.getY();
-                if (xs > xe)
-                {
-                    z = xs;
-                    xs = xe;
-                    xe = z;
-                }
-                if (ys > ye)
-                {
-                    z = ys;
-                    ys = ye;
-                    ye = z;
-                }
-                w = (xe - xs);
-                z = (ye - ys);
-                if ((w < 2) && (z < 2)) initvalues();
-                else
-                {
-                    if (((float)w > (float)z * xy)) ye = (int)((float)ys + (float)w / xy);
-                    else xe = (int)((float)xs + (float)z * xy);
-                    xende = xstart + xzoom * (double)xe;
-                    yende = ystart + yzoom * (double)ye;
-                    xstart += xzoom * (double)xs;
-                    ystart += yzoom * (double)ys;
-                }
-                xzoom = (xende - xstart) / (double)x1;
-                yzoom = (yende - ystart) / (double)y1;
-                mandelbrot();
-                rectangle = false;
-                repaint();
-            }
-        }
-
-        public void mouseEntered(MouseEvent e)
-        {
-        }
-
-        public void mouseExited(MouseEvent e)
-        {
-        }
-
-        public void mouseClicked(MouseEvent e)
-        {
-        }
-
-        public void mouseDragged(MouseEvent e)
-        {
-            e.consume();
-            if (action)
-            {
-                xe = e.getX();
-                ye = e.getY();
-                rectangle = true;
-                //repaint();
-                Refresh();
-            }
-        }
-
-        public void mouseMoved(MouseEvent e)
-        {
-        }
-
-        
-      public String getAppletInfo()
-      {
-        return "fractal.class - Mandelbrot Set a Java Applet by Eckhard Roessel 2000-2001";
-      }
-         
-
-    */
-
-        private void pictureBox1_Paint(object sender, PaintEventArgs e)
-        {
-             
-    }
     }
 }
 
