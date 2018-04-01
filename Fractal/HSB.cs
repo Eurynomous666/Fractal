@@ -13,7 +13,7 @@ namespace Fractal
         {
             rChan = gChan = bChan = 0;
         }
-        public void fromHSB(float h, float s, float b)
+        public void FromHSB(float h, float s, float b)
         {
             if (s == 0)
             {

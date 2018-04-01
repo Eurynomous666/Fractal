@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Xml.Linq;
 
 namespace Fractal
 {
@@ -22,30 +23,81 @@ namespace Fractal
         private static double xstart, ystart, xende, yende, xzoom, yzoom;
         private static bool action, rectangle, finished;
         private static float xy;
-        private bool mouseDown = false;
+        private bool mouseDown = true;
         //private Image picture;
         private Bitmap picture;
-        private Graphics g;
         private Graphics g1;
         private Cursor c1, c2;
+        Rectangle rect = new Rectangle(0, 0, 0, 0);
+        private Pen pen;
+        private int j;
 
-        private void pictureBox1_MouseDown(object sender, MouseEventArgs e)
+
+
+        private void PictureBox1_MouseDown(object sender, MouseEventArgs e)
         {
+        
+            //e.consume();
+            if (action)
             {
-                //e.consume();
-                if (action)
-                {
-                    mouseDown = true;
-                    xs = e.X;
-                    ys = e.Y;
-                }
+                mouseDown = true;
+                xs = e.X;
+                ys = e.Y;
+            }
+            Invalidate();
+
+        }
+
+        private void saveToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            SaveFileDialog Sf = new SaveFileDialog();
+            Sf.Filter = "JPG(*.JPG) | *.JPG";
+            if (Sf.ShowDialog() == DialogResult.OK)
+            {
+                picture.Save(Sf.FileName);
             }
         }
 
-        private void pictureBox1_MouseMove(object sender, MouseEventArgs e)
+        private void blueToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            j = 50;
+            Mandelbrot();
+            Refresh();
+        }
+
+        private void saveStateToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+            SaveFileDialog Sf = new SaveFileDialog();
+            Sf.Filter = "XML Files(*.XML) | *.XML";
+            if (Sf.ShowDialog() == DialogResult.OK)
+            {
+                var converter = TypeDescriptor.GetConverter(typeof(Bitmap));
+                // var image = Convert.ToBase64String((byte[])converter.ConvertTo(this.bitmap, typeof(byte[]))); // convert bitmap to byte array and convert array to string
+
+                var document = new XDocument( // define xml tree
+                    new XElement("state", // parent node - the identifier 
+                                          // new XElement("image", image), // remaining child nodes containing current bitmap values
+                    new XElement("xstart", xstart),
+                    new XElement("ystart", ystart),
+                    new XElement("xzoom", xzoom),
+                    new XElement("yzoom", yzoom)));
+                document.Save(Sf.FileName);
+
+            }
+        }
+
+        private void loadStateToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void PictureBox1_MouseMove(object sender, MouseEventArgs e)
+        {
+            
             if (action && mouseDown)
             {
+                Invalidate();
                 xe = e.X;
                 ye = e.Y;
                 rectangle = true;
@@ -53,9 +105,11 @@ namespace Fractal
             }
         }
 
-        private void pictureBox1_MouseUp(object sender, MouseEventArgs e)
+        private void PictureBox1_MouseUp(object sender, MouseEventArgs e)
         {
+          
             int z, w;
+
 
             if (action)
             {
@@ -65,7 +119,7 @@ namespace Fractal
                 {
                     z = xs;
                     xs = xe;
-                    xe = z;
+                    xe = z;        
                 }
                 if (ys > ye)
                 {
@@ -75,7 +129,7 @@ namespace Fractal
                 }
                 w = (xe - xs);
                 z = (ye - ys);
-                if ((w < 2) && (z < 2)) initvalues();
+                if ((w < 2) && (z < 2)) Initvalues();
                 else
                 {
                     if (((float)w > (float)z * xy)) ye = (int)((float)ys + (float)w / xy);
@@ -87,17 +141,16 @@ namespace Fractal
                 }
                 xzoom = (xende - xstart) / (double)x1;
                 yzoom = (yende - ystart) / (double)y1;
-                mandelbrot();
-                rectangle = false;
+                Mandelbrot();
+                rectangle = true;
                 pictureBox1.Refresh();
-                mouseDown = false;
+                mouseDown = true;
+                Invalidate();
             }
         
     }
 
         private HSB HSBcol;
-        private Pen pen;
-        private Rectangle rect;
 
 
 
@@ -107,7 +160,7 @@ namespace Fractal
         }
 
 
-        private void stop()
+        private void Stop()
         {
             pictureBox1.Image = null;
             pictureBox1.Invalidate();
@@ -118,6 +171,8 @@ namespace Fractal
         public Fractal()
         {
             InitializeComponent();
+
+
             HSBcol = new HSB();
             this.pictureBox1.Size = new System.Drawing.Size(640, 480); // equivalent of setSize in java code
             finished = false;
@@ -129,15 +184,17 @@ namespace Fractal
             picture = new Bitmap(pictureBox1.Width, pictureBox1.Height);
             g1 = Graphics.FromImage(picture);
             finished = true;
+            //editToolStripMenuItem.Enabled = false;
 
-            start();
+
+            Start();
 
         }
 
 
 
 
-         public void destroy() // delete all instances 
+         public void Destroy() // delete all instances 
           {
               if (finished)
               {
@@ -150,31 +207,32 @@ namespace Fractal
           }
 
 
-        public void start()
+        public void Start()
         {
-            action = false;
-            rectangle = false;
-            initvalues();
+            action = true;
+            rectangle = true;
+            Initvalues();
             xzoom = (xende - xstart) / (double)x1;
             yzoom = (yende - ystart) / (double)y1;
-            mandelbrot();
+            Mandelbrot();
         }
 
 
 
-        public void pictureBox1_paint(Graphics g)
+        public   void PictureBox1_paint(Graphics g)
         {
-            Update(g);
-        } 
+            Update();
+        }
 
-        public void Update(Graphics g)
+        private void update()
         {
             Image tempPic = Image.FromHbitmap(picture.GetHbitmap());
             Graphics g1 = Graphics.FromImage(tempPic);
 
-            if (rectangle)
+            if (Fractal.rectangle)
             {
                 Pen pen = new Pen(Color.White);
+               
 
                 Rectangle rect;
 
@@ -204,12 +262,15 @@ namespace Fractal
                             (xe, ye, (xs - xe), (ys - ye));
                     }
                 }
+                g1.DrawRectangle(pen, rect);
+                pictureBox1.Image = tempPic;
+
             }
+
+
         } 
 
-
-
-        private void mandelbrot() // calculate all points
+        private void Mandelbrot() // calculate all points
         {
             int x, y;
             float h, b, alt = 0.0f;
@@ -223,13 +284,13 @@ namespace Fractal
             {
                 for (y = 0; y < y1; y++)
                 {
-                    h = pointcolour(xstart + xzoom * (double)x, ystart + yzoom * (double)y); // hue value
+                    h = Pointcolour(xstart + xzoom * (double)x, ystart + yzoom * (double)y); // hue value
 
                     if (h != alt)
                     {
                         b = 1.0f - h * h; // brightness
 
-                        HSBcol.fromHSB(h, 0.8f, b); //convert hsb to rgb then make a Java Color
+                        HSBcol.FromHSB(h, 0.8f, b); //convert hsb to rgb then make a Java Color
                         Color col = Color.FromArgb(Convert.ToByte(HSBcol.rChan), Convert.ToByte(HSBcol.gChan), Convert.ToByte(HSBcol.bChan));
 
                         pen = new Pen(col);
@@ -247,22 +308,24 @@ namespace Fractal
             pictureBox1.Image = picture;
         }
 
-        private float pointcolour(double xwert, double ywert) // color value from 0.0 to 1.0 by iterations
+        private float Pointcolour(double xwert, double ywert) // color value from 0.0 to 1.0 by iterations
         {
             double r = 0.0, i = 0.0, m = 0.0;
-            int j = 0;
 
-            while ((j < MAX) && (m < 4.0))
+            int s;
+            s = j;
+
+            while ((s < MAX) && (m < 4.0))
             {
-                j++;
+                s++;
                 m = r * r - i * i;
                 i = 2.0 * r * i + ywert;
                 r = m + xwert;
             }
-            return (float)j / (float)MAX;
+            return (float)s / (float)MAX;
         }
 
-        private void initvalues() // reset start values
+        private void Initvalues() // reset start values
         {
             xstart = SX;
             ystart = SY;
