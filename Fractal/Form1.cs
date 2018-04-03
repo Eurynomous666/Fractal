@@ -4,10 +4,12 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Drawing.Printing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Xml;
 using System.Xml.Linq;
 
 namespace Fractal
@@ -23,13 +25,14 @@ namespace Fractal
         private static double xstart, ystart, xende, yende, xzoom, yzoom;
         private static bool action, rectangle, finished;
         private static float xy;
-        private bool mouseDown = true;
+        private bool mouseDown = false;
         //private Image picture;
         private Bitmap picture;
         private Graphics g1;
         private Cursor c1, c2;
         Rectangle rect = new Rectangle(0, 0, 0, 0);
         private Pen pen;
+      
         private int j;
 
 
@@ -44,7 +47,7 @@ namespace Fractal
                 xs = e.X;
                 ys = e.Y;
             }
-            Invalidate();
+            
 
         }
 
@@ -71,25 +74,69 @@ namespace Fractal
             SaveFileDialog Sf = new SaveFileDialog();
             Sf.Filter = "XML Files(*.XML) | *.XML";
             if (Sf.ShowDialog() == DialogResult.OK)
-            {
-                var converter = TypeDescriptor.GetConverter(typeof(Bitmap));
-                // var image = Convert.ToBase64String((byte[])converter.ConvertTo(this.bitmap, typeof(byte[]))); // convert bitmap to byte array and convert array to string
 
-                var document = new XDocument( // define xml tree
-                    new XElement("state", // parent node - the identifier 
-                                          // new XElement("image", image), // remaining child nodes containing current bitmap values
-                    new XElement("xstart", xstart),
-                    new XElement("ystart", ystart),
-                    new XElement("xzoom", xzoom),
-                    new XElement("yzoom", yzoom)));
-                document.Save(Sf.FileName);
-
-            }
+                try
+                {
+                    XmlWriter writer = XmlWriter.Create("state.xml");
+                    writer.WriteStartDocument();
+                    writer.WriteStartElement("states");
+                    writer.WriteElementString("xstart", xstart.ToString());
+                    writer.WriteElementString("ystart", ystart.ToString());
+                    writer.WriteElementString("xzoom", xzoom.ToString());
+                    writer.WriteElementString("yzoom", yzoom.ToString());
+                    writer.WriteEndElement();
+                    writer.WriteEndDocument();
+                    writer.Flush();
+                    writer.Close();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message);
+                }
         }
-
-        private void loadStateToolStripMenuItem_Click(object sender, EventArgs e)
+            private void pictureBox1_Paint(object sender, PaintEventArgs e)
         {
 
+            Image tempPic = Image.FromHbitmap(picture.GetHbitmap());
+            Graphics g1 = Graphics.FromImage(tempPic);
+
+            if (Fractal.rectangle)
+            {
+                Pen pen = new Pen(Color.White);
+
+
+                Rectangle rect;
+
+                if (xs < xe)
+                {
+
+                    if (ys < ye)
+                    {
+                        rect = new Rectangle(xs, ys, (xe - xs), (ye - ys));
+                    }
+                    else
+                    {
+                        rect = new Rectangle
+                            (xs, ye, (xe - xs), (ys - ye));
+                    }
+                }
+                else
+                {
+                    if (ys < ye)
+                    {
+                        rect = new Rectangle
+                            (xe, ys, (xs - xe), (ye - ys));
+                    }
+                    else
+                    {
+                        rect = new Rectangle
+                            (xe, ye, (xs - xe), (ys - ye));
+                    }
+                }
+                g1.DrawRectangle(pen, rect);
+                pictureBox1.Image = tempPic;
+
+            }
         }
 
         private void PictureBox1_MouseMove(object sender, MouseEventArgs e)
@@ -142,10 +189,10 @@ namespace Fractal
                 xzoom = (xende - xstart) / (double)x1;
                 yzoom = (yende - ystart) / (double)y1;
                 Mandelbrot();
-                rectangle = true;
+                rectangle = false;
                 pictureBox1.Refresh();
-                mouseDown = true;
-                Invalidate();
+                mouseDown = false;
+               
             }
         
     }
@@ -209,66 +256,47 @@ namespace Fractal
 
         public void Start()
         {
-            action = true;
-            rectangle = true;
+            action = false;
+            rectangle = false;
             Initvalues();
             xzoom = (xende - xstart) / (double)x1;
             yzoom = (yende - ystart) / (double)y1;
             Mandelbrot();
-        }
 
 
-
-        public   void PictureBox1_paint(Graphics g)
-        {
-            Update();
-        }
-
-        private void update()
-        {
-            Image tempPic = Image.FromHbitmap(picture.GetHbitmap());
-            Graphics g1 = Graphics.FromImage(tempPic);
-
-            if (Fractal.rectangle)
+            String exists = "state.xml";
+            if (File.Exists(exists))
             {
-                Pen pen = new Pen(Color.White);
-               
 
-                Rectangle rect;
-
-                if (xs < xe)
+                try
                 {
-
-                    if (ys < ye)
+                    XmlDocument state = new XmlDocument();
+                    state.Load("state.xml");
+                    foreach (XmlNode node in state)
                     {
-                        rect = new Rectangle(xs, ys, (xe - xs), (ye - ys));
+                        xstart = Convert.ToDouble(node["xstart"]?.InnerText);
+                        ystart = Convert.ToDouble(node["ystart"]?.InnerText);
+                        xzoom = Convert.ToDouble(node["xzoom"]?.InnerText);
+                        yzoom = Convert.ToDouble(node["yzoom"]?.InnerText);
                     }
-                    else
-                    {
-                        rect = new Rectangle
-                            (xs, ye, (xe - xs), (ys - ye));
-                    }
+                    Mandelbrot();
+                    Refresh();
                 }
-                else
+                catch (Exception ex)
                 {
-                    if (ys < ye)
-                    {
-                        rect = new Rectangle
-                            (xe, ys, (xs - xe), (ye - ys));
-                    }
-                    else
-                    {
-                        rect = new Rectangle
-                            (xe, ye, (xs - xe), (ys - ye));
-                    }
+                    MessageBox.Show(ex.Message);
                 }
-                g1.DrawRectangle(pen, rect);
-                pictureBox1.Image = tempPic;
-
             }
+            else
+            {
+                Initvalues();
+                xzoom = (xende - xstart) / (double)x1;
+                yzoom = (yende - ystart) / (double)y1;
+                Mandelbrot();
+            }
+        }
 
 
-        } 
 
         private void Mandelbrot() // calculate all points
         {
