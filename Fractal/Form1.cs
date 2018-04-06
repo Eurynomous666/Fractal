@@ -63,7 +63,35 @@ namespace Fractal
 
         private void blueToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            j = 155;
+            Mandelbrot();
+            Refresh();
+        }
+
+        private void greenToolStripMenuItem_Click(object sender, EventArgs e)
+        {
             j = 50;
+            Mandelbrot();
+            Refresh();
+        }
+
+        private void purpleToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            j = 200;
+            Mandelbrot();
+            Refresh();
+        }
+
+        private void orangeToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            j = 15;
+            Mandelbrot();
+            Refresh();
+        }
+
+        private void defaultToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            j = 0;
             Mandelbrot();
             Refresh();
         }
