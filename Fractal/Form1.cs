@@ -31,7 +31,7 @@ namespace Fractal
         private Graphics g1;
         private Cursor c1, c2;
         Rectangle rect = new Rectangle(0, 0, 0, 0);
-        private Pen pen;
+        
       
         private int j;
 
@@ -94,6 +94,30 @@ namespace Fractal
             j = 0;
             Mandelbrot();
             Refresh();
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            timer1.Start();
+        }
+
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+            j = j + 1;
+            Mandelbrot();
+            Refresh();
+
+        }
+
+        private void RefreshToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Application.Restart();
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            timer1.Stop();
+
         }
 
         private void saveStateToolStripMenuItem_Click(object sender, EventArgs e)
